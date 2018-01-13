@@ -1,26 +1,26 @@
 from random import randint
 
 def rules(left,mid,right):
-    return left ^ right
-def print_AC(cell):
+    return ~mid & (left ^ right)
+def print_CA(cell):
     s = ''
     for x in cell:
         s += '*' if x else '.'
     print (s)
 
-def run_AC(num_cell,num_gen):
-    cell = [randint(0, 1) for x in range(num_cell)]
-    print_AC(cell)
+def CA(num_cell,num_gen):
+    # randomly seed the cell with 1's and 0's initially (except first & last)
+    cell = [randint(0, 1) for x in range(num_cell-2)]     
+    cell = [0] + cell + [0] 
+    print_CA(cell)
 
     next_gen = [0] * num_cell
     for i_gen in range(num_gen):
-        for i in range(num_cell):
-            left = cell[i-1] if i != 0 else 0
-            right = cell[i+1] if i != (num_cell-1) else 0
-            mid = cell[i]
-            next_gen[i] = rules(left,mid,right)
-        print_AC(next_gen)
-        cell = next_gen[:] # copy by value
+        for i in range(1,num_cell-1): # first and last cells to be always empty
+            next_gen[i] = rules(cell[i-1],cell[i],cell[i+1])
+        #print (cell,next_gen)
+        print_CA(next_gen)
+        cell[:] = next_gen[:] # copy by value
 
 if __name__ == '__main__':
-    run_AC(10,10)
+    CA(10,5)
