@@ -1,5 +1,11 @@
 import random
 
+def get_grades(file_path):
+    grades = []
+    for line in open(file_path):
+        grades.append(int(line.split(",")[-1]))
+    return grades
+
 def quicksort(arr):
     random.shuffle(arr) # avoid quadratic-time worst case
     quicksort_helper(arr,0,len(arr)-1)
@@ -36,11 +42,12 @@ def partition(arr,lo,hi):
     return j
 
 if __name__ == '__main__':
-    #arr = ['C','A','B','B','C','C','D']
-    #arr = ['A','B','C','D']
-    #pivot = partition(arr,0,len(arr)-1)
-    #print (arr)
-    #print (pivot)
     arr = ['C','A','B','B','C','C','D']
+    arr = [1,2,2,2]
     quicksort(arr)
     print (arr)
+
+    g = get_grades("unsorted.txt")
+    print (g,len(g))
+    quicksort(g)
+    print (g,len(g))
