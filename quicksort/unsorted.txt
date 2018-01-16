@@ -1,7 +1,7 @@
 Arad, Zerind, 75
 Arad, Sibiu, 140
 Arad, Timisoara, 118 
-Bucharest, Pitesti, 101 
+Bucharest, Pitesti, 101
 Bucharest, Urziceni, 85 
 Bucharest, Giurglu, 90 
 Craiova, Dobreta, 120 
