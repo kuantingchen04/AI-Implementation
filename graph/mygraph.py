@@ -47,7 +47,7 @@ class Graph:
 
 
 def main(G, input_file):
-    """Run add"""
+    """Read file and load graph info"""
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
         for line in csv_reader:
