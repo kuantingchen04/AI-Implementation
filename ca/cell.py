@@ -29,7 +29,7 @@ def CA(num_cell, num_gen):
     cell = [randint(0, 1) for _ in range(num_cell - 2)]
     cell = [0] + cell + [0]
     print_CA(cell)  # initial state
-    print "--------------------"
+    print ("--------------------")
 
     next_gen = [0] * num_cell
     for _ in range(num_gen):  # generate generations

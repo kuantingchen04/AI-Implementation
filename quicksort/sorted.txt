@@ -1,23 +1,23 @@
-Lugoj,Mehadia,70
-Zerind,Oradea,71
-Arad,Zerind,75
-Mehadia,Dobreta,75
-Sibiu,RimnicuVilcea,80
-Bucharest,Urziceni,85
-Hirsova,Eforie,86
-Lasi,Neamt,87
-Bucharest,Giurglu,90
-Vaslui,Lasi,92
-RimnicuVilcea,Pitesti,97
-Urziceni,Hirsova,98
-Sibiu,Fagaras,99
-Bucharest,Pitesti,101
-Timisoara,Lugoj,111
-Arad,Timisoara,118
-Craiova,Dobreta,120
-Pitesti,Craiova,138
-Arad,Sibiu,140
-Urziceni,Vaslui,142
-RimnicuVilcea,Craiova,146
-Oradea,Sibiu,151
-Fagaras,Bucharest,211
+Lugoj, Mehadia, 70
+Zerind, Oradea, 71
+Arad, Zerind, 75
+Mehadia, Dobreta, 75
+Sibiu, Rimnicu Vilcea, 80
+Bucharest, Urziceni, 85
+Hirsova, Eforie, 86
+Lasi, Neamt, 87
+Bucharest, Giurglu, 90
+Vaslui, Lasi, 92
+Rimnicu Vilcea, Pitesti, 97
+Urziceni, Hirsova, 98
+Sibiu, Fagaras, 99
+Bucharest, Pitesti, 101
+Timisoara, Lugoj, 111
+Arad, Timisoara, 118
+Craiova, Dobreta, 120
+Pitesti, Craiova, 138
+Arad, Sibiu, 140
+Urziceni, Vaslui, 142
+Rimnicu Vilcea, Craiova, 146
+Oradea, Sibiu, 151
+Fagaras, Bucharest, 211

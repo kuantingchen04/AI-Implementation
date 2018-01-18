@@ -1,5 +1,4 @@
 import random
-import csv
 
 """quickSort implementation (in-place)"""
 
@@ -45,27 +44,26 @@ def partition(arr, lo, hi):
 def read_file(file_path):
     """Read the input file and return a dict with {grades: [last,first]}"""
     r_dict = {}
-    with open(file_path, 'r') as f:
-        csv_reader = csv.reader(f)
-        for line in csv_reader:
-            [last, first, grade] = line[0], line[1], int(line[2])
-            if grade not in r_dict:
-                r_dict[grade] = []
-            r_dict[grade] += [(last, first)]  # ppl with same scores
-        return r_dict
+    for line in open(file_path,'r'):
+        line = line.rstrip('\n').replace(', ', ',').split(',')
+        [last, first, grade] = line[0], line[1], int(line[2])
+        if not r_dict.get(grade):
+            r_dict[grade] = []
+        r_dict[grade] += [(last, first)] # ppl with same scores
+    return r_dict
 
 def write_file(file_path, info_dict, arr):
-    with open(file_path, 'w') as f:
+    with open(file_path,'w') as f:
         for grade in arr:
-            for (last, first) in info_dict[grade]:
-                csv_writer = csv.writer(f)
-                row = [last, first, grade]
-                csv_writer.writerow(row)
+            # print info_dict[grade]
+            for (last,first) in info_dict[grade]:
+                s = "%s, %s, %s\n" % (last,first,str(grade))
+                f.write(s)
 
 def main(input_file, output_file):
     """Set file input/output"""
     info_dict = read_file(input_file)
-    grade_arr = info_dict.keys()
+    grade_arr = list(info_dict.keys())
     quicksort(grade_arr)  # in-place quicksort funciton
     write_file(output_file, info_dict, grade_arr)
 
