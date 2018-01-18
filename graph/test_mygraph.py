@@ -1,14 +1,14 @@
 import unittest
-import quicksort
+import mygraph
 
 class TestQS(unittest.TestCase):
-    # arr = ['C', 'A', 'B', 'B', 'C', 'C', 'D']
-    # quicksort(arr)
-    # print(arr)
-
-    # arr = read_file("unsorted.txt").keys()
-    # quicksort(arr)
-    # print(arr)
+    # graph = {'A':{'B':1}, 'B':{'A':1}}
+    # g = Graph(graph)
+    # print g.get_dict(), g.V(), g.E()
+    # g.add_vertex('D')
+    # print g.get_dict(),g.V(),g.E()
+    # g.add_edge('D','C',10)
+    # print g.get_dict(), g.V(), g.E()
     def test_invalid_input(self):
         pass
 
