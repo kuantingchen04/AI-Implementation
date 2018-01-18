@@ -47,15 +47,16 @@ class Graph:
 
 def main(G, input_file):
     """Read file and load graph info"""
-    for line in open(input_file,'r'):
+    for line in open(input_file, 'r'):
         line = line.rstrip('\n').replace(', ', ',').split(',')
         [v, w, cost] = line[0], line[1], int(line[2])
         G.add_edge(v, w, cost)
 
+
 if __name__ == '__main__':
 
-    G = Graph() # construct a graph instance G
+    G = Graph()  # construct a graph instance G
     INPUT_FILE = "graph.txt"
-    main(G, INPUT_FILE) # read graph.txt into G
-    print ("number of vertices: %s" % G.V())
-    print ("number of edges: %s" % G.E())
+    main(G, INPUT_FILE)  # read graph.txt into G
+    print("number of vertices: %s" % G.V())
+    print("number of edges: %s" % G.E())
