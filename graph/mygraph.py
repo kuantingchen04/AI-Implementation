@@ -41,8 +41,17 @@ class Graph:
     def get_dict(self):
         return self.g_dict
 
+    def get_nodes(self):
+        return list(self.g_dict.keys())
+
+    def get_cost(self, v, w):
+        return self.g_dict[v][w]
+
     def degree(self, v):
         return len(list(self.g_dict[v].keys()))
+
+    def adj(self, v):
+        return list(self.g_dict[v].keys())
 
 
 def main(G, input_file):
@@ -56,7 +65,7 @@ def main(G, input_file):
 if __name__ == '__main__':
 
     G = Graph()  # construct a graph instance G
-    INPUT_FILE = "graph.txt"
+    INPUT_FILE = "data/graph.txt"
     main(G, INPUT_FILE)  # read graph.txt into G
     print("number of vertices: %s" % G.V())
     print("number of edges: %s" % G.E())
