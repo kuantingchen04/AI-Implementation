@@ -2,7 +2,6 @@ import argparse
 import csv
 import math
 from graph.mygraph import Graph
-from route_planning import graph_search
 
 def parse_args():
     """Parse input arguments."""
@@ -13,12 +12,10 @@ def parse_args():
                         default='Detroit', type=str, required=False)
     parser.add_argument('--algo', dest='algo', help='Search algorithm choice (B, D, I, U, A)',
                         default='A', type=str)
-
     args = parser.parse_args()
     return args
 
 def read_graph(G, input_file):
-    # input_file = "data/transition.csv"
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
         for line in csv_reader:
@@ -26,7 +23,6 @@ def read_graph(G, input_file):
             G.add_edge(v, w, cost)
 
 def get_coords(input_file):
-    # input_file = "data/latlon.csv"
     coords = {}
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
@@ -44,38 +40,49 @@ def latlon_to_cartesian(lat,lon):
     z = math.sin(phi)
     return (x,y,z)
 
-if __name__ == '__main__':
-    # args = parse_args()
-    # problem = {'graph': G, 'coords': coords, 'start': args.start, 'goal': args.goal}
-
-    # 1. Read csv files
+def main(domain):
+    # Read graph info from csv files
     G = Graph()
     read_graph(G, "data/transition.csv")
     coords = get_coords("data/latlon.csv")
 
+    if domain == "route":
+        # Q2: Get domain and search method from route.txt
+        from route import graph_search
+        route_info = []
+        for line in open("route.txt"):
+            route_info.append(line.strip('\n'))
+        start, goal, method = route_info[:3]
+        problem = {'graph': G, 'coords': coords, 'start': start, 'goal': goal}
 
-    # Q2: Get domain and search method from route.txt
-    route_info = []
-    for line in open("route.txt"):
-        route_info.append(line.strip('\n'))
-    start, goal, method = route_info[:3]
+    elif domain == "tsp":
+        # Q3: Get domain and search method from tsp.txt
+        from tsp import graph_search
+        tsp_info = []
+        for line in open("tsp.txt"):
+            tsp_info.append(line.strip('\n'))
+        start, method = tsp_info[:2]
+        problem = {'graph': G, 'coords': coords, 'start': start, 'goal': start}
 
-    start = "Ann Arbor"
-    goal = "Pontiac"
-    method = "I"
-    problem = {'graph': G, 'coords': coords, 'start': start, 'goal': goal}
-
-    result = graph_search(problem, method) # my route planning algorithm
+    result = graph_search(problem, method) # my search algorithm
     if result:
-        path, cost, closed_set = result
-        # path, cost = trace_back(node_to, problem['goal'], G)
+        path, cost, count = result
 
         print("------------------------------")
-        print("nodes expanded: \t %s \t %s" % (len(closed_set), closed_set))
+        print("nodes expanded: \t %s" % count)
         print("solution path: \t %s" % " -> ".join(path))
         print("total cost: \t %s" % cost)
     else:
         print("Search failed!")
 
-    # Q3: Get domain and search method from tsp.txt
+if __name__ == '__main__':
+
+    domain = "route" # route/tsp
+    main(domain)
+
+
+
+
+
+
 
