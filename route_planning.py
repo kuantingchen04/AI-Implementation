@@ -1,19 +1,21 @@
 from quicksort.quicksort import quicksort
 import math
 
-def trace_back(node_to, goal, graph):
+def trace_back(node_to, goal):
     path = []
-    cost = 0
     while goal != None:
         path.insert(0,goal)
         goal = node_to[goal]
+    return path
 
+def cal_path_cost(graph,path):
+    cost = 0
     if len(path) > 1:
         i = 0
         while i < (len(path) - 1):
             cost += graph.get_cost(path[i],path[i+1])
             i += 1
-    return path, cost
+    return cost
 
 def heuristic(coords,v,w):
     (x1, y1, z1) = coords[v]
@@ -28,7 +30,8 @@ def graph_search(problem, strategy):
     if strategy not in ['B', 'D', 'I', 'U', 'A']:
         print ("Enter Correct Strategy!")
         return None
-    if problem['start'] not in problem['graph'].get_nodes() and problem['goal'] not in problem['graph'].get_nodes():
+    if problem['start'] not in problem['graph'].get_nodes() or problem['goal'] not in problem['graph'].get_nodes():
+        print("Enter Correct Start/Goal!")
         return None
 
     # BFS, DFS
@@ -45,7 +48,9 @@ def graph_search(problem, strategy):
             node = frontier.pop()
             print "node:",node
             if node == problem['goal']:
-                return node_to, len(closed_set)
+                path = trace_back(node_to,problem['goal'])
+                cost = cal_path_cost(problem['graph'],path)
+                return path, cost, closed_set
             # Expansion
             closed_set.add(node)
             print "expand", node
@@ -74,7 +79,9 @@ def graph_search(problem, strategy):
         while not frontier.isEmpty():
             node = frontier.pop()
             if node == problem['goal']:
-                return node_to , len(closed_set)
+                path = trace_back(node_to,problem['goal'])
+                cost = cal_path_cost(problem['graph'],path)
+                return path, cost, closed_set
             # Expansion
             closed_set.add(node)
             print "expand", node
@@ -95,20 +102,41 @@ def graph_search(problem, strategy):
             print "queue:", frontier.items
         return None
 
-    # if strategy == 'I':
-    #     frontier = PriorityQueue()
-    #     frontier.push(0, problem['start'])
-    #     closed_set = set()
-    #
-    #     while not frontier.isEmpty():
-    #         node = frontier.pop()
-    #         if node == problem['goal']:
-    #             return node
-    #         closed_set.add(node)
-    #         for child in problem['g raph'].adj():
-    #             if child not in closed_set:
-    #                 frontier.push()
+    # IDS
+    if strategy == 'I':
+        def DLS(problem, limit):
+            path = []
+            closed_set = set()
 
+            def rec_dls(node, problem, limit):
+                if problem['goal'] == node:
+                    path.append(node)
+                    return node
+                elif limit <= 0:
+                    return "cutoff"
+                else:
+                    cutoff_occured = False
+                    # Expansion
+                    closed_set.add(node)
+                    adj = problem['graph'].adj(node)
+                    quicksort(adj)
+                    for child in adj[::-1]:
+                        result = rec_dls(child, problem, limit - 1)
+                        if result == 'cutoff':
+                            cutoff_occurred = True
+                        elif result is not None:
+                            path.append(node)
+                            return result
+                    return 'cutoff' if cutoff_occurred else None
+
+            return rec_dls(problem['start'], problem, limit), path[::-1], closed_set
+
+        max_depth = 15
+        for i in range(max_depth):
+            result, path, closed_set = DLS(problem, i)
+            if result != 'cutoff':
+                cost = cal_path_cost(problem['graph'], path)
+                return  path, cost, closed_set
 
 
 class Stack:

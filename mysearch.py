@@ -2,7 +2,7 @@ import argparse
 import csv
 import math
 from graph.mygraph import Graph
-from route_planning import graph_search, trace_back
+from route_planning import graph_search
 
 def parse_args():
     """Parse input arguments."""
@@ -58,17 +58,20 @@ if __name__ == '__main__':
     route_info = []
     for line in open("route.txt"):
         route_info.append(line.strip('\n'))
-
     start, goal, method = route_info[:3]
+
+    start = "Ann Arbor"
+    goal = "Pontiac"
+    method = "I"
     problem = {'graph': G, 'coords': coords, 'start': start, 'goal': goal}
 
     result = graph_search(problem, method) # my route planning algorithm
     if result:
-        node_to, num_expand = result
-        path, cost = trace_back(node_to, problem['goal'], G)
+        path, cost, closed_set = result
+        # path, cost = trace_back(node_to, problem['goal'], G)
 
         print("------------------------------")
-        print("nodes expanded: \t %s" % num_expand)
+        print("nodes expanded: \t %s \t %s" % (len(closed_set), closed_set))
         print("solution path: \t %s" % " -> ".join(path))
         print("total cost: \t %s" % cost)
     else:
