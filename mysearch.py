@@ -2,6 +2,7 @@ import argparse
 import csv
 import math
 from graph.mygraph import Graph
+from general_search import general_search
 
 def parse_args():
     """Parse input arguments."""
@@ -50,10 +51,9 @@ def main(domain, path_set):
         print "Wrong Domain!"
         return
 
-    from route import graph_search
+
     if domain == "route":
-        # Q2: Get domain and search method from route.txt
-        # from route import graph_search
+        # Get domain and search method from route.txt
         route_info = []
         for line in open(path_set["DOMAIN_ROUTE_FILE"]):
             route_info.append(line.strip('\n'))
@@ -62,14 +62,13 @@ def main(domain, path_set):
 
     elif domain == "tsp":
         # Q3: Get domain and search method from tsp.txt
-        # from tsp import graph_search
         tsp_info = []
         for line in open(path_set["DOMAIN_TSP_FILE"]):
             tsp_info.append(line.strip('\n'))
         start, method = tsp_info[:2]
-        problem = {'domain': domain, 'method': method, 'graph': G, 'coords': coords, 'start': start, 'goal': start}
+        problem = {'domain': domain, 'method': method, 'graph': G, 'coords': coords, 'start': start}
 
-    result = graph_search(problem) # my search algorithm
+    result = general_search(problem) # my search algorithm
     if result:
         path, cost, count = result
 
@@ -97,11 +96,4 @@ if __name__ == '__main__':
         "DOMAIN_ROUTE_FILE": "route2.txt",
         "DOMAIN_TSP_FILE": "tsp2.txt"
     }
-    main(domain, path_set_2)
-
-
-
-
-
-
-
+    main(domain, path_set)

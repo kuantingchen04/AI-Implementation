@@ -3,10 +3,9 @@ class Node:
         self.value = value
         self.parent = parent
         self.depth = 0
-        self.cost_so_far = cost_so_far
+        self.cost_so_far = cost_so_far # storing the acumulative cost on the path
         if parent:
             self.depth = parent.depth + 1
-            self.cost_so_far = parent.cost_so_far + cost_so_far
 
     def __str__(self):
         return self.value
@@ -70,6 +69,7 @@ class Queue:
         return False
     def __str__(self):
         return str([x.value for x in self.items])
+
 class PriorityQueue:
     """
     storing tuples in PQ: (priority, item)
