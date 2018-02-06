@@ -7,6 +7,7 @@ def quicksort(arr):
     """Shuffle array & apply qs"""
     random.shuffle(arr)  # preprocess to avoid quadratic-time worst case
     quicksort_helper(arr, 0, len(arr) - 1)
+    return arr
 
 
 def quicksort_helper(arr, lo, hi):

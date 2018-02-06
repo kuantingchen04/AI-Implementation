@@ -40,35 +40,36 @@ def latlon_to_cartesian(lat,lon):
     z = math.sin(phi)
     return (x,y,z)
 
-def main(domain):
+def main(domain, path_set):
     # Read graph info from csv files
     G = Graph()
-    read_graph(G, "data/transition.csv")
-    coords = get_coords("data/latlon.csv")
+    read_graph(G, path_set["GRAPH_FILE"])
+    coords = get_coords( path_set["COORDS_FILE"] )
 
     if domain not in ["route","tsp"]:
         print "Wrong Domain!"
         return
 
+    from route import graph_search
     if domain == "route":
         # Q2: Get domain and search method from route.txt
-        from route import graph_search
+        # from route import graph_search
         route_info = []
-        for line in open("route.txt"):
+        for line in open(path_set["DOMAIN_ROUTE_FILE"]):
             route_info.append(line.strip('\n'))
         start, goal, method = route_info[:3]
-        problem = {'domain': domain, 'graph': G, 'coords': coords, 'start': start, 'goal': goal}
+        problem = {'domain': domain, 'method': method, 'graph': G, 'coords': coords, 'start': start, 'goal': goal}
 
     elif domain == "tsp":
         # Q3: Get domain and search method from tsp.txt
-        from tsp import graph_search
+        # from tsp import graph_search
         tsp_info = []
-        for line in open("tsp.txt"):
+        for line in open(path_set["DOMAIN_TSP_FILE"]):
             tsp_info.append(line.strip('\n'))
         start, method = tsp_info[:2]
-        problem = {'domain': domain, 'graph': G, 'coords': coords, 'start': start, 'goal': start}
+        problem = {'domain': domain, 'method': method, 'graph': G, 'coords': coords, 'start': start, 'goal': start}
 
-    result = graph_search(problem, method) # my search algorithm
+    result = graph_search(problem) # my search algorithm
     if result:
         path, cost, count = result
 
@@ -83,8 +84,20 @@ def main(domain):
 
 if __name__ == '__main__':
 
-    domain = "route" # route/tsp
-    main(domain)
+    domain = "tsp" # route/tsp
+    path_set = {
+        "GRAPH_FILE": "data/transition.csv",
+        "COORDS_FILE": "data/latlon.csv",
+        "DOMAIN_ROUTE_FILE": "route.txt",
+        "DOMAIN_TSP_FILE": "tsp.txt"
+    }
+    path_set_2 = {
+        "GRAPH_FILE": "data2/transition.csv",
+        "COORDS_FILE": "data2/latlon.csv",
+        "DOMAIN_ROUTE_FILE": "route2.txt",
+        "DOMAIN_TSP_FILE": "tsp2.txt"
+    }
+    main(domain, path_set_2)
 
 
 

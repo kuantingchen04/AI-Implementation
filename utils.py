@@ -1,10 +1,12 @@
 class Node:
-    def __init__(self, value=None, parent=None):
+    def __init__(self, value=None, parent=None, cost_so_far=0):
         self.value = value
         self.parent = parent
         self.depth = 0
+        self.cost_so_far = cost_so_far
         if parent:
             self.depth = parent.depth + 1
+            self.cost_so_far = parent.cost_so_far + cost_so_far
 
     def __str__(self):
         return self.value
@@ -13,7 +15,7 @@ class Node:
         path = []
         node = self
         while node:
-            path.append(node)
+            path.append(node.value)
             node = node.parent
         return path[::-1]
 
@@ -41,6 +43,8 @@ class Stack:
             if item == x.value:
                 return True
         return False
+    def __str__(self):
+        return str([x.value for x in self.items])
 class Queue:
     def __init__(self):
         self.items = []
@@ -64,7 +68,8 @@ class Queue:
             if item == x.value:
                 return True
         return False
-
+    def __str__(self):
+        return str([x.value for x in self.items])
 class PriorityQueue:
     """
     storing tuples in PQ: (priority, item)
@@ -114,6 +119,8 @@ class PriorityQueue:
         for i, (priority,key) in enumerate(self.items):
             if item == key:
                 self.items.pop(i)
+    def __str__(self):
+        return str([ (x[0], x[1].value) for x in self.items])
 
 def cal_path_cost(graph,path):
     cost = 0
