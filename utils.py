@@ -1,5 +1,21 @@
-# class Node:
+class Node:
+    def __init__(self, value=None, parent=None):
+        self.value = value
+        self.parent = parent
+        self.depth = 0
+        if parent:
+            self.depth = parent.depth + 1
 
+    def __str__(self):
+        return self.value
+
+    def get_path(self):
+        path = []
+        node = self
+        while node:
+            path.append(node)
+            node = node.parent
+        return path[::-1]
 
 
 class Stack:
@@ -21,8 +37,10 @@ class Stack:
         return len(self.items)
 
     def __contains__(self, item):
-        return item in self.items
-
+        for x in self.items:
+            if item == x.value:
+                return True
+        return False
 class Queue:
     def __init__(self):
         self.items = []
@@ -42,7 +60,10 @@ class Queue:
         return len(self.items)
 
     def __contains__(self, item):
-        return item in self.items
+        for x in self.items:
+            if item == x.value:
+                return True
+        return False
 
 class PriorityQueue:
     """
@@ -93,13 +114,6 @@ class PriorityQueue:
         for i, (priority,key) in enumerate(self.items):
             if item == key:
                 self.items.pop(i)
-
-def trace_back(node_to, goal):
-    path = []
-    while goal != None:
-        path.insert(0,goal)
-        goal = node_to[goal]
-    return path
 
 def cal_path_cost(graph,path):
     cost = 0

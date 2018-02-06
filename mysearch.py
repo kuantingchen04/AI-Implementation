@@ -46,6 +46,10 @@ def main(domain):
     read_graph(G, "data/transition.csv")
     coords = get_coords("data/latlon.csv")
 
+    if domain not in ["route","tsp"]:
+        print "Wrong Domain!"
+        return
+
     if domain == "route":
         # Q2: Get domain and search method from route.txt
         from route import graph_search
@@ -53,7 +57,7 @@ def main(domain):
         for line in open("route.txt"):
             route_info.append(line.strip('\n'))
         start, goal, method = route_info[:3]
-        problem = {'graph': G, 'coords': coords, 'start': start, 'goal': goal}
+        problem = {'domain': domain, 'graph': G, 'coords': coords, 'start': start, 'goal': goal}
 
     elif domain == "tsp":
         # Q3: Get domain and search method from tsp.txt
@@ -62,18 +66,20 @@ def main(domain):
         for line in open("tsp.txt"):
             tsp_info.append(line.strip('\n'))
         start, method = tsp_info[:2]
-        problem = {'graph': G, 'coords': coords, 'start': start, 'goal': start}
+        problem = {'domain': domain, 'graph': G, 'coords': coords, 'start': start, 'goal': start}
 
     result = graph_search(problem, method) # my search algorithm
     if result:
         path, cost, count = result
 
         print("------------------------------")
-        print("nodes expanded: \t %s" % count)
+        print("domain: \t %s" % domain)
+        print("method: \t %s" % method)
+        print("node expanded: \t %s" % count)
         print("solution path: \t %s" % " -> ".join(path))
         print("total cost: \t %s" % cost)
     else:
-        print("Search failed!")
+        print("no path!")
 
 if __name__ == '__main__':
 
