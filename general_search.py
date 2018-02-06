@@ -1,11 +1,14 @@
 from quicksort.quicksort import quicksort
 from utils import Stack, Queue, PriorityQueue, cal_path_cost, Node
 import math
+import random
 
-def heuristic(coords,v,w):
-    (x1, y1, z1) = coords[v]
-    (x2, y2, z2) = coords[w]
-    return math.sqrt( (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2 )
+def astar_heuristic(problem,child_value):
+    if problem['domain'] == 'route':
+        v, w = child_value, problem['goal']
+        (x1, y1, z1) = problem['coords'][v]
+        (x2, y2, z2) = problem['coords'][w]
+        return math.sqrt( (x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2 )
 
 def goal_test(problem, node):
     if problem['domain'] == 'route':
@@ -22,8 +25,10 @@ def push_or_not(problem,node,child_value,closed_set):
     elif problem['domain'] == 'tsp':
         if problem['method'] in ['B','I','U']:
             return True
-        elif problem['method'] == 'D': # loop problem
-            return
+        elif problem['method'] == 'D': # loop problem: use random select
+            if node.depth <= 2: # ensure enough nodes are in the stack
+                return True
+            return random.randint(0, 1)
         elif problem['method'] == 'A': # heuristic
             return
             # return not node.parent or (node.parent and child_value != node.parent.value)
@@ -67,7 +72,8 @@ def general_search(problem):
             for child_value in quicksort(adj):
                 if push_or_not(problem, node, child_value, closed_set):
                 # if child_value not in closed_set: # route
-                # if not node.parent or (node.parent and child_value != node.parent.value):  # tsp
+                # if True:  # tsp: BFS
+                # if random.randint(0, 1):  # tsp: DFS
                     child = Node(child_value, node)
                     frontier.push(child)
                     print "->push", child
@@ -78,7 +84,7 @@ def general_search(problem):
     # UCS, Astar
     if method in ['U','A']:
         frontier = PriorityQueue()
-        priority = 0 if method == 'U' else heuristic(problem['coords'],problem['goal'],problem['start'])
+        priority = 0 if method == 'U' else astar_heuristic(problem, problem['start'])
         frontier.push(priority, Node(problem['start']))
 
         closed_set = set()
@@ -100,7 +106,7 @@ def general_search(problem):
                 # if not node.parent or (node.parent and child_value != node.parent.value): # tsp
                 # if child_value not in closed_set:  # route
                     child_cost = node.cost_so_far + problem['graph'].get_cost(node.value, child_value)  # g_n
-                    priority = child_cost if method == 'U' else child_cost + heuristic(problem['coords'],problem['goal'],child_value)
+                    priority = child_cost if method == 'U' else child_cost + astar_heuristic(problem, child_value)
                     child = Node(child_value, node, child_cost)
                     frontier.push(priority,child)
                     print "->push", child, child_cost
@@ -122,7 +128,6 @@ def general_search(problem):
                     path = node.get_path()
                     cost = cal_path_cost(problem['graph'], path)
                     return path, cost, frontier.count
-
                 if node.depth == limit:
                     pass
                 else:
@@ -131,7 +136,7 @@ def general_search(problem):
                     for child_value in quicksort(adj):
                         if push_or_not(problem, node, child_value, closed_set):
                         # if child_value not in closed_set: # route
-                        # if not node.parent or (node.parent and child_value != node.parent.value):  # tsp
+                        # if True:  # tsp
                             child = Node(child_value, node)
                             frontier.push(child)
                             print "->push", child

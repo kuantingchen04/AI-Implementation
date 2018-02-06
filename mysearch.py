@@ -83,7 +83,7 @@ def main(domain, path_set):
 
 if __name__ == '__main__':
 
-    domain = "tsp" # route/tsp
+    domain = "route" # route/tsp
     path_set = {
         "GRAPH_FILE": "data/transition.csv",
         "COORDS_FILE": "data/latlon.csv",
