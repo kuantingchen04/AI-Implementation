@@ -1,9 +1,11 @@
 class Node:
+    """Node API implementation"""
+
     def __init__(self, value=None, parent=None, cost_so_far=0):
         self.value = value
         self.parent = parent
         self.depth = 0
-        self.cost_so_far = cost_so_far # storing the acumulative cost on the path
+        self.cost_so_far = cost_so_far  # storing the acumulative cost on the path
         if parent:
             self.depth = parent.depth + 1
 
@@ -20,14 +22,25 @@ class Node:
 
 
 class Stack:
+    """Stack API implementation"""
+
     def __init__(self):
         self.items = []
         self.count = 0
 
+    def __str__(self):
+        return str([x.value for x in self.items])
+
+    def __contains__(self, item):
+        for x in self.items:
+            if item == x.value:
+                return True
+        return False
+
     def isEmpty(self):
         return self.items == []
 
-    def push(self,item):
+    def push(self, item):
         self.items.append(item)
 
     def pop(self):
@@ -37,22 +50,27 @@ class Stack:
     def size(self):
         return len(self.items)
 
+
+class Queue:
+    """Queue API implementation"""
+
+    def __init__(self):
+        self.items = []
+        self.count = 0
+
+    def __str__(self):
+        return str([x.value for x in self.items])
+
     def __contains__(self, item):
         for x in self.items:
             if item == x.value:
                 return True
         return False
-    def __str__(self):
-        return str([x.value for x in self.items])
-class Queue:
-    def __init__(self):
-        self.items = []
-        self.count = 0
 
     def isEmpty(self):
         return self.items == []
 
-    def push(self,item):
+    def push(self, item):
         self.items.append(item)
 
     def pop(self):
@@ -62,23 +80,30 @@ class Queue:
     def size(self):
         return len(self.items)
 
-    def __contains__(self, item):
-        for x in self.items:
-            if item == x.value:
-                return True
-        return False
-    def __str__(self):
-        return str([x.value for x in self.items])
 
 class PriorityQueue:
     """
+    PriorityQueue API implementation
     storing tuples in PQ: (priority, item)
     order: return the min/max item first
     """
+
     def __init__(self, order=min):
         self.items = []
         self.order = order
         self.count = 0
+
+    def __str__(self):
+        return str([(x[0], x[1].value) for x in self.items])
+
+    def __contains__(self, item):
+        keys = [key for (priority, key) in self.items]
+        return item in keys
+
+    def __delitem__(self, item):
+        for i, (priority, key) in enumerate(self.items):
+            if item == key:
+                self.items.pop(i)
 
     def isEmpty(self):
         return self.items == []
@@ -94,7 +119,7 @@ class PriorityQueue:
 
         lo, hi = 0, len(self.items)
         while lo < hi:
-            mid = (lo+hi) // 2
+            mid = (lo + hi) // 2
             if x > self.items[mid]:
                 lo = mid + 1
             else:
@@ -111,32 +136,23 @@ class PriorityQueue:
     def size(self):
         return len(self.items)
 
-    def __contains__(self, item):
-        keys = [ key for (priority,key) in self.items]
-        return item in keys
 
-    def __delitem__(self, item):
-        for i, (priority,key) in enumerate(self.items):
-            if item == key:
-                self.items.pop(i)
-    def __str__(self):
-        return str([ (x[0], x[1].value) for x in self.items])
-
-def cal_path_cost(graph,path):
+def cal_path_cost(graph, path):
     cost = 0
     if len(path) > 1:
         i = 0
         while i < (len(path) - 1):
-            cost += graph.get_cost(path[i],path[i+1])
+            cost += graph.get_cost(path[i], path[i + 1])
             i += 1
     return cost
 
+
 if __name__ == '__main__':
     PQ = PriorityQueue()
-    PQ.push(5,'A')
-    PQ.push(5,'A')
-    PQ.push(5,'B')
-    PQ.push(2,'C')
+    PQ.push(5, 'A')
+    PQ.push(5, 'A')
+    PQ.push(5, 'B')
+    PQ.push(2, 'C')
 
     print PQ.items
     print PQ.pop()

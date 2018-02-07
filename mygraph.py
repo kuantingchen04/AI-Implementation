@@ -1,4 +1,4 @@
-
+from quicksort.quicksort import quicksort
 """Graph API implementation"""
 
 
@@ -53,6 +53,56 @@ class Graph:
     def adj(self, v):
         return list(self.g_dict[v].keys())
 
+    def get_edges(self):
+        edges = []
+        node_idx = {x: i for i, x in enumerate(self.get_nodes())}
+        for v, value in self.g_dict.iteritems():
+            for w, cost in value.iteritems():
+                if (cost, w, v) not in edges:
+                    edges.append((cost, node_idx[v], node_idx[w]))
+        return quicksort(edges)
+
+    def mst(self):
+        """Minimum spanning tree"""
+        def find(parent, i):
+            if parent[i] == i:
+                return i
+            return find(parent, parent[i])
+
+        def union(parent, rank, x, y):
+            x_root = find(parent, x)
+            y_root = find(parent, y)
+
+            if rank[x_root] < rank[y_root]:
+                parent[x_root] = y_root
+            elif rank[x_root] > rank[y_root]:
+                parent[y_root] = x_root
+            else:
+                parent[y_root] = x_root
+                rank[x_root] += 1
+
+        result = []
+        parent, rank = [], []
+        node_name = {i: x for i, x in enumerate(self.get_nodes())}
+
+        for id in range(self.V()):
+            parent.append(id)
+            rank.append(0)
+
+        e_cnt = 0
+        for (cost, v, w) in self.get_edges():
+            if e_cnt == (self.V() - 1):
+                break
+            x = find(parent, v)
+            y = find(parent, w)
+            if x != y:
+                e_cnt += 1
+                result.append([node_name[v], node_name[w], cost])
+                union(parent, rank, x, y)
+
+        for v, w, cost in result:
+            print("%s -- %s == %d" % (v, w, cost))
+
 
 def main(G, input_file):
     """Read file and load graph info"""
@@ -65,7 +115,9 @@ def main(G, input_file):
 if __name__ == '__main__':
 
     G = Graph()  # construct a graph instance G
-    INPUT_FILE = "data/graph.txt"
+    INPUT_FILE = "graph.txt"
     main(G, INPUT_FILE)  # read graph.txt into G
     print("number of vertices: %s" % G.V())
     print("number of edges: %s" % G.E())
+    # print G.get_edges()
+    # G.mst()
