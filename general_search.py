@@ -74,7 +74,6 @@ def general_search(problem):
         while not frontier.isEmpty():
             node = frontier.pop()
             closed_set.add(node.value)
-            print("node: %s" % node)
             if goal_test(problem, node):
                 path = node.get_path()
                 cost = cal_path_cost(problem['graph'], path)
@@ -87,12 +86,9 @@ def general_search(problem):
                 if push_or_not(problem, node, child_value, closed_set):
                     child_node = Node(child_value, node)
                     frontier.push(child_node)
-                    print "->push", child_node
-            # print frontier
-            print("------------------------------")
         return None
 
-    # UCS, Astar
+    """Uniform Cost Search / Astar Search"""
     if method in ['U', 'A']:
         frontier = PriorityQueue()
         start_node = Node(problem['start'])
@@ -104,7 +100,6 @@ def general_search(problem):
         while not frontier.isEmpty():
             node = frontier.pop()
             closed_set.add(node.value)
-            print "node:", node, node.cost_so_far
             if goal_test(problem, node):
                 path = node.get_path()
                 cost = cal_path_cost(problem['graph'], path)
@@ -119,12 +114,9 @@ def general_search(problem):
                     priority = child_cost if method == 'U' else child_cost + \
                         astar_heuristic(problem, child_node)
                     frontier.push(priority, child_node)
-                    print "->push", child_node, child_cost
-            # print frontier
-            print("------------------------------")
         return None
 
-    # IDS
+    """Iterative Deepening Search"""
     if method == 'I':
         def depth_limited(problem, limit):
             frontier = Stack()
@@ -134,7 +126,6 @@ def general_search(problem):
             while not frontier.isEmpty():
                 node = frontier.pop()
                 closed_set.add(node.value)
-                print "node:", node
                 if goal_test(problem, node):
                     path = node.get_path()
                     cost = cal_path_cost(problem['graph'], path)
@@ -148,9 +139,6 @@ def general_search(problem):
                         if push_or_not(problem, node, child_value, closed_set):
                             child_node = Node(child_value, node)
                             frontier.push(child_node)
-                            print "->push", child_node
-                # print frontier
-                print("------------------------------")
             return None
         max_depth = 20
         for i in range(max_depth):
