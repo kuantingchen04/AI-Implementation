@@ -33,7 +33,12 @@ def goal_test(problem, node):
 
 
 def push_or_not(problem, node, child_value, closed_set):
-    if problem['domain'] == 'route':  # if the city has been expanded before, dont push to the queue
+    """route planning: use graph search to avoid repeat nodes, but be careful to Astar (still need to check cost)
+    tsp: tree search
+    """
+    if problem['domain'] == 'route' and problem['method'] == 'A':  # Todo: Astar not optimal, check value
+        return child_value not in closed_set
+    elif problem['domain'] == 'route':  # if the city has been expanded before, dont push to the queue
         return child_value not in closed_set
 
     elif problem['domain'] == 'tsp':
@@ -49,7 +54,7 @@ def general_search(problem):
     """Problem: {doamin, method, graph, coords, start, goal}
     method: B, D, I, U, A
 
-    route: graph search (maintain a closed set)
+    route: graph search (maintain a closed set) except Astar
     tsp: tree search
     """
     method = problem['method']
