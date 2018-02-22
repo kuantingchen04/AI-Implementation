@@ -6,8 +6,7 @@ import math
 
 from collections import namedtuple
 
-State = namedtuple('State', ['board', 'player'])
-# Construct a board struct (state, turn(0v1))
+State = namedtuple('State', ['board', 'player']) # board: list, player: 'x' or 'o'
 
 class TicTacToe:
 
@@ -123,18 +122,18 @@ def random_solver(state):
         if not state.board[a]:
             return a
 
-if __name__ == '__main__':
-    seed = int(sys.argv[1])
-    random.seed(seed)
-
+def main():
     TTT = TicTacToe(init_player = 'x')
-
     TTT.show_board()
     while not TTT.complete():
         if TTT.game_state.player == 'x':
             action = random_solver(TTT.game_state)
             TTT.game_state = TTT.result(TTT.game_state, action)
         else:
-            action = minimax_solver(TTT.game_state, TTT, 'min') # In this game, x: MAX, o: MIN
+            action = minimax_solver(TTT.game_state, TTT, 'min')  # In this game, x: MAX, o: MIN
             TTT.game_state = TTT.result(TTT.game_state, action)
         TTT.show_board()
+
+if __name__ == '__main__':
+    random.seed( int(sys.argv[1]) )
+    main()
