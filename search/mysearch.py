@@ -15,7 +15,7 @@ def read_graph(G, input_file):
 
 
 def get_coords(input_file):
-    """Load coords info"""
+    """Load coords info"""ㄔ
     coords = {}
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
