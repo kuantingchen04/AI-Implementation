@@ -1,10 +1,12 @@
-from quicksort.quicksort import quicksort
-from utils import Stack, Queue, PriorityQueue, Node, cal_path_cost
 import math
 import random
+from utils import Stack, Queue, PriorityQueue, Node, cal_path_cost
+from quicksort.quicksort import quicksort
 
+"""Calculate heuristic for astar"""
 
 def astar_heuristic(problem, child_node):
+    """Calculate heuristic for astar"""
     def distance(v, w):
         (x1, y1, z1) = problem['coords'][v]
         (x2, y2, z2) = problem['coords'][w]
@@ -21,6 +23,8 @@ def astar_heuristic(problem, child_node):
             if node_value not in visited_set:  # nonvisited node
                 heuristic += distance(child_node.value, node_value)
         return heuristic
+    print("wrong domain")
+    return False
 
 
 def goal_test(problem, node):
@@ -30,15 +34,18 @@ def goal_test(problem, node):
         path = node.get_path()
         visited_set = set(path)
         return len(visited_set) == len(problem['graph'].get_nodes())
+    print("wrong domain")
+    return False
 
 
 def push_or_not(problem, node, child_value, closed_set):
-    """route planning: use graph search to avoid repeat nodes, but be careful to Astar (still need to check cost)
+    """route planning: use graph search to avoid repeat nodes,
+        but be careful to Astar (still need to check cost)
     tsp: tree search
     """
-    if problem['domain'] == 'route' and problem['method'] == 'A':  # Todo: Astar not optimal, check value
+    if problem['domain'] == 'route' and problem['method'] == 'A': #Todo: Astar not optimal, use tree
         return child_value not in closed_set
-    elif problem['domain'] == 'route':  # if the city has been expanded before, dont push to the queue
+    elif problem['domain'] == 'route':  # if the city has been expanded before, dont push to queue
         return child_value not in closed_set
 
     elif problem['domain'] == 'tsp':
@@ -124,6 +131,7 @@ def general_search(problem):
     """Iterative Deepening Search"""
     if method == 'I':
         def depth_limited(problem, limit):
+            """Depth Limited Search"""
             frontier = Stack()
             start_node = Node(problem['start'])
             frontier.push(start_node)

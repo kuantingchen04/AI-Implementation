@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import csv
 import math
 from mygraph import Graph
@@ -15,7 +17,7 @@ def read_graph(G, input_file):
 
 
 def get_coords(input_file):
-    """Load coords info"""ㄔ
+    """Load coords info"""
     coords = {}
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
@@ -45,8 +47,8 @@ def main(domain, path_set):
     coords = get_coords(path_set["COORDS_FILE"])
 
     if domain not in ["route", "tsp"]:
-        print "Wrong Domain!"
-        return
+        # print "Wrong Domain!"
+        return 0
 
     if domain == "route":
         # Q2: Get domain and search method from route.txt
