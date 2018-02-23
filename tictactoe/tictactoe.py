@@ -81,7 +81,7 @@ class TicTacToe:
             return 0
 
 def minimax_solver(state, game, min_or_max):
-    """Given state and the game (static methods),
+    """Given state and the game's static methods,
     return the action [0-8] which achieve the min/max utility.
     In this game, x: MAX, o: MIN"""
 

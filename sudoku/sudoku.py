@@ -5,6 +5,7 @@ from itertools import combinations
 
 """Sudoku game"""
 
+
 class CSP:
 
     def __init__(self, variables, domains, constraints):
@@ -16,9 +17,50 @@ class CSP:
         self.variables = variables
         self.domains = domains
         self.constraints = constraints
+        # self.log = []
 
     def __str__(self):
         return str(self.variables) + str(self.domains)
+
+    def complete(self):
+        pass
+
+    def goal_test(self, assignment):
+        return len(assignment) == len(self.variables)
+
+    def get_domain(self, var):
+        # print var
+        # print self.domains[var]
+        return self.domains[var].copy()
+
+    def check_constraints(self, assignment, new_var, new_value):
+        # print new_var, new_value # debug
+        for var, value in assignment.iteritems():
+            if new_var in self.constraints[var] and new_value==value:
+                return False
+        return True
+
+    # csp ordering
+    def select_variable(self, assignment):
+        unassigned_set = set(self.variables) - set(assignment.keys())
+        return list(unassigned_set)[0]
+
+    def show(self):
+        cnt = 0
+        for x in self.variables:
+            if len(self.domains[x]) == 1:
+                print x,
+                cnt += 1
+        print "\t size-1 domain: %s / %s" % (cnt, len(self.variables))
+        # print self.domains['A1']
+        # print self.constraints['A1']
+
+    def get_init_assignmnet(self):
+        assignment = {}
+        for x in self.variables:
+            if len(self.domains[x]) == 1:
+                assignment[x] = list(self.domains[x])[0]
+        return assignment
 
 
 # -------------------------------
@@ -38,8 +80,8 @@ def load_sudoku(input_file):
 
     variables = [ x+y for x in rows for y in cols ]
 
-    # Construct domain
-    domains = { x+y: {1,2,3,4,5,6,7,8,9} for x in rows for y in cols } # default
+    # Construct domain, careful: we used string instead of int
+    domains = { x+y: {'1','2','3','4','5','6','7','8','9'} for x in rows for y in cols } # default
 
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
@@ -76,43 +118,66 @@ def load_sudoku(input_file):
 
     return CSP(variables, domains, constraints)
 
-def show_sudoku(csp):
-    cnt = 0
-    for x in csp.variables:
-        domain_set = csp.domains[x]
-        if len(domain_set) == 1:
-            print "%s: %s" % (x,list(domain_set)[0]),
-            cnt += 1
-        elif len(domain_set) == 0:
-            print "%s: %s" % (x, 'X')
-    print "\t fill: %s / 81" %  cnt
-    print csp.domains['A1']
-    print csp.constraints['A1']
+def write_sudoku(output_file, assignment):
+
+    with open(output_file, 'w') as f:
+        csv_writer = csv.writer(f)
+
+        row = ''
+        for i, sym in enumerate(sorted(assignment)): # 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'...
+            row += "%s" % assignment[sym]
+            if (i + 1) % 9 == 0:
+                csv_writer.writerow(row)
+                row = ''
+            else:
+                row += ''
 
 # -------------------------------
-# csp processor
+## csp processor
 
+def backtrack_solver(csp):
+    """Backtracking search
+    return solution"""
+    # assignment = {}
+    assignment = csp.get_init_assignmnet()
+    return backtrack(assignment, csp)
+
+def backtrack(assignment, csp):
+    if csp.goal_test(assignment):
+        return assignment
+    var = csp.select_variable(assignment)
+    # print var
+    for value in csp.get_domain(var):
+        if csp.check_constraints(assignment, var, value): # T: consistent
+            assignment[var] = value
+            result = backtrack(assignment, csp)
+            if result:
+                return result
+            del assignment[var]
+    return False
+    # AC3_filter(csp)
+    # return csp
+
+# csp filtering
 def AC3_filter(csp):
     """return a reduced-domain csp"""
     return csp
-
-def backtrack_solver(csp):
-    """return solution"""
-
-    AC3_filter(csp)
-    return csp
-
-
 
 def main():
     """Define csp, run backtracking and use AC-3 filtering"""
 
     sudoku_file = "suinput.csv"
+    output_file = "suoutput.csv"
+
     csp = load_sudoku(sudoku_file)
-    show_sudoku(csp)
-
-    backtrack_solver(csp)
-
+    csp.show()
+    result = backtrack_solver(csp)
+    if result:
+        write_sudoku(output_file, result)
+        csp.show()
+        print "Sudoku solved"
+    else:
+        print "error"
 
 if __name__ == '__main__':
     main()
