@@ -2,6 +2,7 @@
 
 import csv
 from itertools import combinations
+import time
 
 """Sudoku game"""
 
@@ -21,24 +22,6 @@ class CSP:
 
     def __str__(self):
         return str(self.variables) + str(self.domains)
-
-    # def goal_test(self, assignment):
-    #     return len(assignment) == len(self.variables)
-
-    # def get_domain(self, var):
-    #     return self.domains[var].copy()
-
-    # def check_constraints(self, assignment, new_var, new_value):
-    #     # print new_var, new_value # debug
-    #     for var, value in assignment.iteritems():
-    #         if new_var in self.constraints[var] and new_value==value:
-    #             return False
-    #     return True
-
-    # csp ordering
-    # def select_variable(self, assignment):
-    #     unassigned_set = set(self.variables) - set(assignment.keys())
-    #     return list(unassigned_set)[0]
 
     def show(self):
         cnt = 0
@@ -131,7 +114,13 @@ def write_sudoku(output_file, assignment):
 
 # csp basics
 def goal_test(assignment, csp):
-    return len(assignment) == len(csp.variables)
+    if len(assignment) != len(csp.variables):
+        return False
+    # check empty domains, happens when filtering
+    for key, val in csp.domains.iteritems():
+        if len(val) == 0:
+            return False
+    return True
 
 def get_domain(var, csp):
     return csp.domains[var].copy()
@@ -143,31 +132,49 @@ def check_constraints(assignment, new_var, new_value, csp):
             return False
     return True
 
+def assign_variable(assignment, var, value, csp):
+    """return a removal dict"""
+    assignment[var] = value
+    # removal_vals =
+    removal = dict()
+    removal[var] = { val for val in csp.domains[var] if val != value } # set of store other values
+    csp.domains[var] = {value}  # assign value
+    return removal
 
 # csp search
-def backtrack_solver(csp):
+def backtrack_search_solver(csp):
     """Backtracking search
-    return solution"""
+    return solution
+    """
     # assignment = {}
     assignment = csp.get_init_assignmnet()
-    return backtrack(assignment, csp)
+    return backtrack_search(assignment, csp)
 
-def backtrack(assignment, csp):
+def backtrack_search(assignment, csp):
+    """
+    domain reduction happens: 1.assignment 2.ac3 (filtering)
+    required a removal list for recovery
+    """
     if goal_test(assignment, csp):
         return assignment
     var = select_variable(assignment, csp)
     # print var
     for value in get_domain(var, csp):
         if check_constraints(assignment, var, value, csp): # T: consistent
-            assignment[var] = value
-            result = backtrack(assignment, csp)
+
+            # assign and filter
+            removal = assign_variable(assignment, var, value, csp)
+            # AC3_filter(csp)
+
+            result = backtrack_search(assignment, csp)
             if result:
                 return result
+
+            # branch fail: recover assignment & vars' domains
+            for k,v in removal.iteritems():
+                csp.domains[k] = csp.domains[k] | v
             del assignment[var]
     return False
-    # AC3_filter(csp)
-    # return csp
-
 
 # csp ordering
 def select_variable(assignment, csp):
@@ -177,9 +184,7 @@ def select_variable(assignment, csp):
 # csp filtering
 def AC3_filter(csp):
     """return a reduced-domain csp"""
-    return csp
-
-
+    pass
 
 def main():
     """Define csp, run backtracking and use AC-3 filtering"""
@@ -189,7 +194,11 @@ def main():
 
     csp = load_sudoku(sudoku_file)
     csp.show()
-    result = backtrack_solver(csp)
+
+    t0 = time.time()
+    AC3_filter(csp) # preprocessor
+    result = backtrack_search_solver(csp)
+    print "runtime: %s" % (time.time() - t0)
     if result:
         write_sudoku(output_file, result)
         csp.show()

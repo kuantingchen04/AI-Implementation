@@ -1,6 +1,6 @@
 import unittest
 
-from sudoku import load_sudoku, backtrack_solver
+from sudoku import load_sudoku, backtrack_search_solver
 
 # too hard? might sol might vary?
 
@@ -10,7 +10,7 @@ class TestSudoku(unittest.TestCase):
         sudoku_file = "tests/suinput_592.csv"
 
         csp = load_sudoku(sudoku_file)
-        result = backtrack_solver(csp)
+        result = backtrack_search_solver(csp)
 
         self.assertTrue(result)
 
@@ -23,7 +23,7 @@ class TestSudoku(unittest.TestCase):
         sudoku_file = "tests/suinput_very_easy.csv"
 
         csp = load_sudoku(sudoku_file)
-        result = backtrack_solver(csp)
+        result = backtrack_search_solver(csp)
 
         self.assertTrue(result)
 
@@ -36,7 +36,7 @@ class TestSudoku(unittest.TestCase):
         sudoku_file = "tests/suinput_easy.csv"
 
         csp = load_sudoku(sudoku_file)
-        result = backtrack_solver(csp)
+        result = backtrack_search_solver(csp)
 
         self.assertTrue(result)
 
