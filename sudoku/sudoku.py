@@ -22,28 +22,23 @@ class CSP:
     def __str__(self):
         return str(self.variables) + str(self.domains)
 
-    def complete(self):
-        pass
+    # def goal_test(self, assignment):
+    #     return len(assignment) == len(self.variables)
 
-    def goal_test(self, assignment):
-        return len(assignment) == len(self.variables)
+    # def get_domain(self, var):
+    #     return self.domains[var].copy()
 
-    def get_domain(self, var):
-        # print var
-        # print self.domains[var]
-        return self.domains[var].copy()
-
-    def check_constraints(self, assignment, new_var, new_value):
-        # print new_var, new_value # debug
-        for var, value in assignment.iteritems():
-            if new_var in self.constraints[var] and new_value==value:
-                return False
-        return True
+    # def check_constraints(self, assignment, new_var, new_value):
+    #     # print new_var, new_value # debug
+    #     for var, value in assignment.iteritems():
+    #         if new_var in self.constraints[var] and new_value==value:
+    #             return False
+    #     return True
 
     # csp ordering
-    def select_variable(self, assignment):
-        unassigned_set = set(self.variables) - set(assignment.keys())
-        return list(unassigned_set)[0]
+    # def select_variable(self, assignment):
+    #     unassigned_set = set(self.variables) - set(assignment.keys())
+    #     return list(unassigned_set)[0]
 
     def show(self):
         cnt = 0
@@ -53,7 +48,6 @@ class CSP:
                 cnt += 1
         print "\t size-1 domain: %s / %s" % (cnt, len(self.variables))
         # print self.domains['A1']
-        # print self.constraints['A1']
 
     def get_init_assignmnet(self):
         assignment = {}
@@ -133,8 +127,24 @@ def write_sudoku(output_file, assignment):
                 row += ''
 
 # -------------------------------
-## csp processor
+## csp processing
 
+# csp basics
+def goal_test(assignment, csp):
+    return len(assignment) == len(csp.variables)
+
+def get_domain(var, csp):
+    return csp.domains[var].copy()
+
+def check_constraints(assignment, new_var, new_value, csp):
+    # print new_var, new_value # debug
+    for var, value in assignment.iteritems():
+        if new_var in csp.constraints[var] and new_value==value:
+            return False
+    return True
+
+
+# csp search
 def backtrack_solver(csp):
     """Backtracking search
     return solution"""
@@ -143,12 +153,12 @@ def backtrack_solver(csp):
     return backtrack(assignment, csp)
 
 def backtrack(assignment, csp):
-    if csp.goal_test(assignment):
+    if goal_test(assignment, csp):
         return assignment
-    var = csp.select_variable(assignment)
+    var = select_variable(assignment, csp)
     # print var
-    for value in csp.get_domain(var):
-        if csp.check_constraints(assignment, var, value): # T: consistent
+    for value in get_domain(var, csp):
+        if check_constraints(assignment, var, value, csp): # T: consistent
             assignment[var] = value
             result = backtrack(assignment, csp)
             if result:
@@ -158,10 +168,18 @@ def backtrack(assignment, csp):
     # AC3_filter(csp)
     # return csp
 
+
+# csp ordering
+def select_variable(assignment, csp):
+    unassigned_set = set(csp.variables) - set(assignment.keys())
+    return list(unassigned_set)[0]
+
 # csp filtering
 def AC3_filter(csp):
     """return a reduced-domain csp"""
     return csp
+
+
 
 def main():
     """Define csp, run backtracking and use AC-3 filtering"""
