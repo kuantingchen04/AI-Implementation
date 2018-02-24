@@ -4,45 +4,190 @@ import csv
 from itertools import combinations
 import time
 
-"""Sudoku game"""
+"""Sudoku game using arc-consistency check"""
+
+Debug = False
 
 
 class CSP:
-
+    """Define csp
+    varialbes: [var1, var2, ...]
+    domain: { var1:set() var2:set() }
+    constraint (neighbors): {var1:}
+    """
     def __init__(self, variables, domains, constraints):
-        """varialbes: [var1, var2, ...]
-        domain: { var1:set() var2:set() }
-        constraint (neighbors): {var1:}
-        """
-
         self.variables = variables
         self.domains = domains
         self.constraints = constraints
-        # self.log = []
 
     def __str__(self):
         return str(self.variables) + str(self.domains)
 
     def show(self):
+        """Print out variables with domain size 1"""
         cnt = 0
+        s = ""
         for x in self.variables:
             if len(self.domains[x]) == 1:
-                print x,
+                s += "%s " % x
                 cnt += 1
-        print "\t size-1 domain: %s / %s" % (cnt, len(self.variables))
-        # print self.domains['A1']
+        print("%s \t size-1 domain: %s / %s" % (s, cnt, len(self.variables)))
 
-    def get_init_assignmnet(self):
+    def get_init_assignment(self):
+        """Return dict of assignment which are specified initially"""
         assignment = {}
         for x in self.variables:
             if len(self.domains[x]) == 1:
                 assignment[x] = list(self.domains[x])[0]
         return assignment
 
+# CSP Processing
+def goal_test(assignment, csp):
+    """Check if all variables are assigned"""
+    for var in csp.variables:
+        if len(csp.domains[var]) != 1 or var not in assignment:
+            return False
+    return True
+
+def get_domain(var, csp):
+    return csp.domains[var].copy()
+
+def check_constraints(assignment, new_var, new_value, csp):
+    """Check if new_value violates its neighbor"""
+    if Debug:
+        if new_var == 'B9':
+            print("%s %s %s %s" % (new_var, new_value, len(assignment), csp.domains['B9']))
+        else:
+            print("%s %s %s" % (new_var, new_value, len(assignment)))
+
+    for var, value in assignment.iteritems():
+        if new_var in csp.constraints[var] and new_value == value:
+            return False
+    return True
+
+def check_consistency(csp):
+    """Check if any variable is empty (because fo ac3)"""
+    for key, val in csp.domains.iteritems():  # empty domains happens when filtering
+        if not val:
+            return False
+    return True
+
+def assign_variable(assignment, var, value, csp):
+    """Add assignment, remove domain, return a removal dict for recovery"""
+    assignment[var] = value
+    removal = dict()
+    removal[var] = {val for val in csp.domains[var]
+                    if val != value}  # set of store other values
+    csp.domains[var] = {value}  # assign value
+    return removal
+
+
+# CSP Search (Backtracking)
+def backtrack_search_solver(csp, apply_ac3=False):
+    """Backtracking search
+    apply_ac3: True if applying ac3
+
+    Return assignment if csp solved, False if failed
+    """
+    # assignment = {}
+    assignment = csp.get_init_assignment()
+    return backtrack_search(assignment, csp, apply_ac3)
+
+def backtrack_search(assignment, csp, apply_ac3):
+    """
+    Recursive of backtracking search
+    domain reduction happens when: 1.assignment 2.ac3 (filtering)
+
+    assign -> ac3 filtering -> assign -> ...
+
+    Maintain a removal list for [assignment/var's domain] recovery
+    """
+    if goal_test(assignment, csp):
+        return assignment
+    var = select_variable(assignment, csp)
+    for value in get_domain(var, csp):
+
+        if check_constraints(assignment, var, value, csp):  # check consistency
+
+            assign_removal = assign_variable(assignment, var, value, csp)
+
+            if apply_ac3:
+                # add x -> var (x: neighbors)
+                queue = [(x, var) for x in csp.constraints[var]]
+                ac3_removal = ac3_filtering(csp, queue)
+
+            if check_consistency(csp):  # ac3 might result in empty domains
+                result = backtrack_search(assignment, csp, apply_ac3)
+                if result:
+                    return result
+
+            removal = merge_removals(
+                assign_removal, ac3_removal, var) if apply_ac3 else assign_removal
+
+            # when branch fail: recover assignment & vars' domains
+            for k, v in removal.iteritems():
+                csp.domains[k] = csp.domains[k] | v
+            del assignment[var]
+    return False
+
+# CSP Ordering
+def select_variable(assignment, csp):
+    """Return the first variable in unassigned list"""
+    unassigned_set = set(csp.variables) - set(assignment.keys())
+    return list(unassigned_set)[0]
+
+# CSP Filtering
+def ac3_filtering(csp, queue=None):
+    """Return a reduced-domain csp given queue (x,y)
+    key idea: For x -> y, check x,y's domains, and remove x's val if necessary
+
+    Required consistency check after this method
+    Return a removal dict for recovery
+    """
+    if not queue:  # for preprocessor
+        queue = []
+        for var1, neighbors in csp.constraints.iteritems():
+            for var2 in neighbors:
+                queue.append((var1, var2))
+    removal = dict()
+    while queue:
+        x, y = queue.pop()
+        # some revision done on x's domain
+        if remove_inconsistent_values(x, y, removal, csp):
+            queue = queue + [(z, x) for z in csp.constraints[x]]
+    return removal
+
+
+def remove_inconsistent_values(x, y, removal, csp):
+    """Check x, y domain, remove from x's if necessary
+    Return True if there is any revision on x
+    """
+    revision = False  # check if any revision occurs
+    x_domain = csp.domains[x].copy()  # might change
+    y_domain = csp.domains[y]
+    for x_val in x_domain:
+        if not y_domain - {x_val}:
+            csp.domains[x].remove(x_val)
+            revision = True
+            if x not in removal:
+                removal[x] = {x_val}
+            else:
+                removal[x] = removal[x] | {x_val}
+    return revision
+
+
+def merge_removals(assign_removal, ac3_removal, var):
+    """Merge removals from assignment and ac3"""
+    merge_dict = ac3_removal.copy()
+
+    if var in merge_dict and var in ac3_removal:
+        merge_dict[var] = assign_removal[var] | ac3_removal[var]
+    elif var in assign_removal:
+        merge_dict[var] = assign_removal[var]
+    return merge_dict
 
 # -------------------------------
-# sudoku methods
-
+# Sudoku methods
 def load_sudoku(input_file):
     """from file
     define board row: A-I, col: 1-9
@@ -55,53 +200,55 @@ def load_sudoku(input_file):
     rows = 'ABCDEFGHI'
     cols = '123456789'
 
-    variables = [ x+y for x in rows for y in cols ]
+    variables = [x + y for x in rows for y in cols]
 
     # Construct domain, careful: we used string instead of int
-    domains = { x+y: {'1','2','3','4','5','6','7','8','9'} for x in rows for y in cols } # default
+    domains = {x + y: {'1', '2', '3', '4', '5', '6', '7', '8', '9'}
+               for x in rows for y in cols}  # default
 
     with open(input_file, 'r') as f:
         csv_reader = csv.reader(f)
-        sudoku_mat = list(csv_reader) # list-of-list
+        sudoku_mat = list(csv_reader)  # list-of-list
 
     for i, row in enumerate(sudoku_mat):
         for j, val in enumerate(row):
             if val != '0':
-                sym = rows[i] + cols[j] # A1
-                domains[sym] = { val }
+                sym = rows[i] + cols[j]  # A1
+                domains[sym] = {val}
 
     # Construct constraints using all neighbor pairs
-    neighbor_pairs = [] # add all pairs (a,b) in row, col, box, but not (b,a)
+    neighbor_pairs = []  # add all pairs (a,b) in row, col, box, but not (b,a)
     # row
     for x in rows:
-        sym_row = [ x+y for y in cols ] # eg: A1-A9
+        sym_row = [x + y for y in cols]  # eg: A1-A9
         neighbor_pairs.extend(combinations(sym_row, 2))
 
     # col
     for y in cols:
-        sym_col = [ x+y for x in rows ] # eg: A1-I1
+        sym_col = [x + y for x in rows]  # eg: A1-I1
         neighbor_pairs.extend(combinations(sym_col, 2))
 
     # 3x3 box
-    for i in range(0,9,3):
-        for j in range(0,9,3):
-            sym_box = [ x+y for x in rows[i:i+3] for y in cols[j:j+3] ]
+    for i in range(0, 9, 3):
+        for j in range(0, 9, 3):
+            sym_box = [x + y for x in rows[i:i + 3] for y in cols[j:j + 3]]
             neighbor_pairs.extend(combinations(sym_box, 2))
 
-    constraints = { x:set() for x in variables } # initialize
-    for x,y in neighbor_pairs:
+    constraints = {x: set() for x in variables}  # initialize
+    for x, y in neighbor_pairs:
         constraints[x].add(y)
         constraints[y].add(x)
 
     return CSP(variables, domains, constraints)
 
 def write_sudoku(output_file, assignment):
-
+    """Write a csv file given dict of assigments"""
     with open(output_file, 'w') as f:
         csv_writer = csv.writer(f)
 
         row = ''
-        for i, sym in enumerate(sorted(assignment)): # 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'...
+        # 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'...
+        for i, sym in enumerate(sorted(assignment)):
             row += "%s" % assignment[sym]
             if (i + 1) % 9 == 0:
                 csv_writer.writerow(row)
@@ -109,176 +256,30 @@ def write_sudoku(output_file, assignment):
             else:
                 row += ''
 
-# -------------------------------
-## csp processing
-
-# csp basics
-def goal_test(assignment, csp):
-    # if len(assignment) != len(csp.variables):
-    #      return False
-
-    for var in csp.variables:
-        if len(csp.domains[var]) != 1 or var not in assignment:
-            return False
-    return True
-    # for key, val in csp.domains.iteritems():
-    #     if len(val) == 0:
-    #         return False
-    # return True
-
-def get_domain(var, csp):
-    return csp.domains[var].copy()
-
-def check_constraints(assignment, new_var, new_value, csp):
-    print new_var, new_value, len(assignment) # debug
-    for var, value in assignment.iteritems():
-        if new_var in csp.constraints[var] and new_value==value:
-            return False
-    return True
-
-def check_consistency(csp):
-    for key, val in csp.domains.iteritems(): # empty domains happens when filtering
-        if len(val) == 0:
-            return False
-    return True
-
-def assign_variable(assignment, var, value, csp):
-    """return a removal dict"""
-    assignment[var] = value
-    # removal_vals =
-    removal = dict()
-    removal[var] = { val for val in csp.domains[var] if val != value } # set of store other values
-    csp.domains[var] = {value}  # assign value
-    return removal
-
-# csp search
-def backtrack_search_solver(csp, filter_or_not=False):
-    """Backtracking search
-    filter_or_not -> ac3
-    return solution
-    """
-    # assignment = {}
-    assignment = csp.get_init_assignmnet()
-    result = backtrack_search(assignment, csp, filter_or_not)
-    print assignment, len(assignment)
-    return result
-
-def backtrack_search(assignment, csp, filter_or_not):
-    """
-    domain reduction happens: 1.assignment 2.ac3 (filtering)
-    required a removal list for recovery
-    """
-    if goal_test(assignment, csp):
-        return assignment
-    var = select_variable(assignment, csp)
-    # print var
-    for value in get_domain(var, csp):
-        if var == 'D7' and value == '2':
-            print check_constraints(assignment, var, value, csp)
-
-        if check_constraints(assignment, var, value, csp): # check consistency
-
-            # assign
-            assign_removal = assign_variable(assignment, var, value, csp)
-
-
-
-            # filter: might result in empty domains
-            if filter_or_not:
-                queue = [(x,var) for x in csp.constraints[var]] # check x -> var
-                ac3_removal = AC3_filter(csp, queue)
-                # csp.show()
-
-            # if var == 'D7' and value == '2':
-            #     print assign_removal, ac3_removal, check_consistency(csp), csp.domains['D7']
-            #     for x,v in csp.domains.iteritems():
-            #         if len(v) == 0:
-            #             print x, v
-
-            if check_consistency(csp): # need to check after ac3
-                result = backtrack_search(assignment, csp, filter_or_not)
-                if result:
-                    return result
-
-            removal = merge_two_dicts(assign_removal, ac3_removal) if filter_or_not else assign_removal
-
-            # branch fail: recover assignment & vars' domains
-            for k,v in removal.iteritems():
-                csp.domains[k] = csp.domains[k] | v
-            del assignment[var]
-    return False
-
-# csp ordering
-def select_variable(assignment, csp):
-    unassigned_set = set(csp.variables) - set(assignment.keys())
-    return list(unassigned_set)[0]
-
-# csp filtering
-def AC3_filter(csp, queue=None):
-    """return a reduced-domain csp
-    queue (x,y) : check each x -> y
-    required consistency check after this method
-
-    return a removal dict for recovery
-    """
-    if not queue: # for preprocessor
-        queue = []
-        for var1, neighbors in csp.constraints.iteritems():
-            for var2 in neighbors:
-                queue.append((var1,var2))
-    removal = dict()
-    # print queue[-1]
-    while queue:
-        x,y = queue.pop()
-        if remove_inconsistent_values(x,y, removal, csp): # done some revision on x's domain
-            queue = queue + [ (z,x) for z in csp.constraints[x] ]
-    return removal
-
-def remove_inconsistent_values(x, y, removal, csp):
-    """Check x, y domain, remove from x's if necessary"""
-    revision = False # check if any revision done
-    x_domain = csp.domains[x].copy() # might change
-    # print csp.domains, y
-    y_domain = csp.domains[y]
-    for x_val in x_domain:
-        if not (y_domain - {x_val}):
-            csp.domains[x].remove(x_val)
-            revision = True
-            if x not in removal:
-                removal[x] = { x_val }
-            else:
-                removal[x] = removal[x] | { x_val }
-    return revision
-
-def merge_two_dicts(x, y):
-    z = x.copy()
-    z.update(y)
-    return z
 
 def main():
     """Define csp, run backtracking and use AC-3 filtering"""
 
-    sudoku_file = "tests/suinput_easy.csv"
+    sudoku_file = "suinput.csv"
     output_file = "suoutput.csv"
 
     csp = load_sudoku(sudoku_file)
-    csp.show()
+    if Debug:
+        csp.show()
 
-    t0 = time.time()
-    init_assignments = csp.get_init_assignmnet()
-    queue = [(x,var) for var in init_assignments for x in csp.constraints[var]]
-    AC3_filter(csp,queue) # preprocessor
-    result = backtrack_search_solver(csp, filter_or_not=True)
-    print "runtime: %s" % (time.time() - t0)
+    t_0 = time.time()
+    queue = [(x, var) for var in csp.get_init_assignment()
+             for x in csp.constraints[var]]
+    ac3_filtering(csp, queue)  # preprocessor
+    result = backtrack_search_solver(csp, apply_ac3=True)
+    if Debug:
+        csp.show()
+        print("Runtime: %s" % (time.time() - t_0))
     if result:
         write_sudoku(output_file, result)
-        csp.show()
-        print "Sudoku solved"
+        print("Sudoku solved")
     else:
-        csp.show()
-        print "error"
-
-    # print csp.domains
+        print("Invalid board")
 
 
 if __name__ == '__main__':
