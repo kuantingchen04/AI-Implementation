@@ -83,17 +83,18 @@ def assign_variable(assignment, var, value, csp):
 
 
 # CSP Search (Backtracking)
-def backtrack_search_solver(csp, apply_ac3=False):
+def backtrack_search_solver(csp, apply_ac3=False, apply_mrv=False):
     """Backtracking search
-    apply_ac3: True if applying ac3
+    apply_ac3: True if apply ac3
+    apply_mrv: True if apply mrv, speed up a lot
 
     Return assignment if csp solved, False if failed
     """
     # assignment = {}
     assignment = csp.get_init_assignment()
-    return backtrack_search(assignment, csp, apply_ac3)
+    return backtrack_search(assignment, csp, apply_ac3, apply_mrv)
 
-def backtrack_search(assignment, csp, apply_ac3):
+def backtrack_search(assignment, csp, apply_ac3, apply_mrv):
     """
     Recursive of backtracking search
     domain reduction happens when: 1.assignment 2.ac3 (filtering)
@@ -104,7 +105,10 @@ def backtrack_search(assignment, csp, apply_ac3):
     """
     if goal_test(assignment, csp):
         return assignment
-    var = select_variable(assignment, csp)
+
+    var = select_minimum_remaining_variable(assignment, csp) if apply_mrv \
+        else select_first_variable(assignment, csp)
+
     for value in get_domain(var, csp):
 
         if check_constraints(assignment, var, value, csp):  # check consistency
@@ -117,7 +121,7 @@ def backtrack_search(assignment, csp, apply_ac3):
                 ac3_removal = ac3_filtering(csp, queue)
 
             if check_consistency(csp):  # ac3 might result in empty domains
-                result = backtrack_search(assignment, csp, apply_ac3)
+                result = backtrack_search(assignment, csp, apply_ac3, apply_mrv)
                 if result:
                     return result
 
@@ -131,10 +135,18 @@ def backtrack_search(assignment, csp, apply_ac3):
     return False
 
 # CSP Ordering
-def select_variable(assignment, csp):
+def select_first_variable(assignment, csp):
     """Return the first variable in unassigned list"""
     unassigned_set = set(csp.variables) - set(assignment.keys())
     return list(unassigned_set)[0]
+
+def select_minimum_remaining_variable(assignment, csp):
+    """Return the unassigned variable with the smallest domain"""
+    unassigned_set = set(csp.variables) - set(assignment.keys())
+    mrv_list = []
+    for var in unassigned_set:
+        mrv_list.append( (len(csp.domains[var]),var) )
+    return min(mrv_list)[1]
 
 # CSP Filtering
 def ac3_filtering(csp, queue=None):
@@ -260,7 +272,7 @@ def write_sudoku(output_file, assignment):
 def main():
     """Define csp, run backtracking and use AC-3 filtering"""
 
-    sudoku_file = "suinput.csv"
+    sudoku_file = "tests/suinput_very_hard.csv"
     output_file = "suoutput.csv"
 
     csp = load_sudoku(sudoku_file)
@@ -271,10 +283,11 @@ def main():
     queue = [(x, var) for var in csp.get_init_assignment()
              for x in csp.constraints[var]]
     ac3_filtering(csp, queue)  # preprocessor
-    result = backtrack_search_solver(csp, apply_ac3=True)
+    result = backtrack_search_solver(csp, apply_ac3=True, apply_mrv=True)
     if Debug:
         csp.show()
-        print("Runtime: %s" % (time.time() - t_0))
+    print("Runtime: %s" % (time.time() - t_0))
+
     if result:
         write_sudoku(output_file, result)
         print("Sudoku solved")
