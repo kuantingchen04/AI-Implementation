@@ -1,0 +1,26 @@
+% Random Variables
+SC, B, C, D, E, P, S
+% Graph Edges (From, To)
+D, SC
+E, SC
+B, P
+SC, P
+P, C
+S, C
+% Probability values
+P(D=T)=0.1
+P(E=T)=0.3
+P(B=T)=0.95
+P(S=T)=0.99
+P(SC=T|D=T,E=T)=0.0
+P(SC=T|D=T,E=F)=0.6
+P(SC=T|D=F,E=T)=0.0
+P(SC=T|D=F,E=F)=0.9
+P(P=T|SC=T,B=T)=0.9
+P(P=T|SC=T,B=F)=0.1
+P(P=T|SC=F,B=T)=0.7
+P(P=T|SC=F,B=F)=0.0
+P(C=T|P=T,S=T)=0.9
+P(C=T|P=T,S=F)=0.5
+P(C=T|P=F,S=T)=0.01
+P(C=T|P=F,S=F)=0.0

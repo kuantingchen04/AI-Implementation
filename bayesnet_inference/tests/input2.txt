@@ -1,0 +1,5 @@
+% Query random variable (print the probability X=T)
+B
+% Evidence vector (insert blank line when no evidence is given)
+SC=T, E=T
+% End of input
