@@ -1,0 +1,26 @@
+% Random Variables
+I, H, KM, PS, S, EX, DP
+% Graph Edges (From, To)
+I, KM
+H, KM
+KM, EX
+DP, EX
+EX, S
+PS, S
+% Probability values
+P(I=T)=0.7
+P(H=T)=0.6
+P(DP=T)=0.5
+P(PS=T)=0.7
+P(KM=T|I=T,H=T)=1.0
+P(KM=T|I=T,H=F)=0.4
+P(KM=T|I=F,H=T)=0.6
+P(KM=T|I=F,H=F)=0.05
+P(S=T|PS=T,EX=T)=0.8
+P(S=T|PS=F,EX=T)=0.7
+P(S=T|PS=T,EX=F)=0.7
+P(S=T|PS=F,EX=F)=0.3
+P(EX=T|DP=T,KM=T)=0.85
+P(EX=T|DP=F,KM=T)=0.7
+P(EX=T|DP=T,KM=F)=0.2
+P(EX=T|DP=F,KM=F)=0.1
