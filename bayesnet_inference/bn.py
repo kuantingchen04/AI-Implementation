@@ -287,8 +287,12 @@ def log(*args):
 
 def main():
     """Read Bayes Net and Input, computer the prob. dist."""
-    BN = read_bn("tests/bn.txt")
-    query, evidence = read_input("tests/input.txt")
+
+    bn_file = "tests/bn.txt"
+    input_file = "tests/input.txt"
+
+    BN = read_bn(bn_file)
+    query, evidence = read_input(input_file)
 
     res = enumerate_inference(query, evidence, BN) # main program
     print("%.3f %.3f" % (res[0], res[1]))
