@@ -42,6 +42,7 @@ def class_counts(rows):
 
 def entropy(data):
     counts = class_counts(data)
+    # print data,counts
     entropy = 0
     for label in counts:
         prob_of_lbl = counts[label] / float(len(data))
@@ -55,10 +56,11 @@ def info_gain_from_entropy(partitions, current_uncertainty):
     for i, cnt in enumerate(cnts):
         p = float(cnt)/total
         res = res - p * entropy(partitions[i])
+        # print cnt, p, entropy(partitions[i])
     return res
 
 # Find most important
-def get_best_attr(data, header_info, idx_lst=None):
+def get_best_question(data, header_info, idx_lst=None):
     best_gain = -float("inf")
     if not idx_lst:
         n = len(header_info) - 1 # exclude label
@@ -78,39 +80,48 @@ def get_best_attr(data, header_info, idx_lst=None):
 
 
 class Decision_Node:
-    def __init__(self,attr, child_nodes=None):
-        self.attr = attr
+    def __init__(self, pr_q, pr_attr, q, child_nodes=None):
+        self.pr_q = pr_q
+        self.pr_attr = pr_attr
+        self.q = q
         if not child_nodes:
             self.child_nodes = []
 
 class Leaf:
-    def __init__(self, rows, val):
-        self.predictions = class_counts(rows)
+    def __init__(self, rows, pr_q, pr_attr, pred):
         self.examples = rows
-        self.val = val
+        self.predictions = class_counts(rows)
+        self.pr_q = pr_q
+        self.pr_attr = pr_attr
+        self.pred = pred
 
-def decision_tree_learning(examples, attr_idxs, parent_examples, header_info):
+def decision_tree_learning(examples, parent_examples, header_info, q_idxs, pr_q=None, pr_attr=None):
     if len(examples) == 0:
         pr_cls_cnt = class_counts(parent_examples)
-        return Leaf(parent_examples, max(pr_cls_cnt.values())) # PLURALITY-VALUE(parent examples)
+        pred = max(pr_cls_cnt, key=lambda k: pr_cls_cnt[k])
+        return Leaf(parent_examples, pr_q, pr_attr, pred) # PLURALITY-VALUE(parent examples)
 
     cls_cnt = class_counts(examples)
 
     if len(cls_cnt.keys())==1: # only 1 class
-        return Leaf(examples, cls_cnt.values()[0])
-    if not attr_idxs:
-        return Leaf(examples, max(cls_cnt.values()))
+        pred = cls_cnt.keys()[0]
+        return Leaf(examples, pr_q, pr_attr, pred)
+
+    if not q_idxs:
+        pred = max(cls_cnt, key=lambda k: cls_cnt[k])
+        return Leaf(examples, pr_q, pr_attr, pred)
 
     # pick best attr
 
-    best_gain, best_attr_idx = get_best_attr(examples, header_info, attr_idxs)
-    partitions = partition_by_a(examples, best_attr_idx, header_info)
+    best_gain, best_q = get_best_question(examples, header_info, q_idxs)
+    partitions = partition_by_a(examples, best_q, header_info)
 
-    attr_idxs.remove(best_attr_idx)
+    q_idxs.remove(best_q)
 
-    node = Decision_Node(best_attr_idx)
-    for i, val in enumerate(header_info[best_attr_idx]['values']):
-        child = decision_tree_learning(partitions[i], attr_idxs, examples, header_info)
+    node = Decision_Node(pr_q,pr_attr,best_q)
+
+    for i, attr_val in enumerate(header_info[best_q]['values']):
+        child = decision_tree_learning(partitions[i], examples, header_info, q_idxs, best_q, attr_val)
         node.child_nodes.append(child)
 
     return node
@@ -119,15 +130,26 @@ def decision_tree_learning(examples, attr_idxs, parent_examples, header_info):
 
 def print_tree(node, header_info, spacing=""):
     if isinstance(node, Leaf):
-        print spacing+"Leaf", node.predictions, node.examples
+        print spacing+"[Leaf]", node.predictions, node.pred
         return
 
-    print spacing+ "Q: %s?" % header_info[node.attr]['name']
+    print spacing+ "Q: %s?" % header_info[node.q]['name'] # Decision node
 
     for i, child in enumerate(node.child_nodes):
-        print spacing + '-->' + header_info[node.attr]['values'][i] + ':'
+        print spacing + '-->' + header_info[node.q]['values'][i] + ':'
         print_tree(child, header_info, spacing + "  ")
 
+
+def print_tree_2(node, header_info, parent=None):
+    if isinstance(node, Leaf):
+        print header_info[node.pr_q]['name'], node.pr_attr, node.pred # print LEAF
+        return
+
+    if node.pr_q: # neglect first decision node
+        print "%s? %s %s?" % (header_info[node.pr_q]['name'], node.pr_attr, header_info[node.q]['name'])# print DECISION
+
+    for i, child in enumerate(node.child_nodes):
+        print_tree_2(child, header_info, node)
 
 # Parsers
 def read_decision_tree(fname):
@@ -193,7 +215,7 @@ def info_gain_from_gini(left, right, current_uncertainty):
     p = float(len(left)) / (len(left) + len(right))
     return current_uncertainty - p * gini(left) - (1 - p) * gini(right)
 
-def get_best_question(data, header, header_vals):
+def get_best_q(data, header, header_vals):
     """Try all question and find the best"""
     best_gain = 0
     best_question = None
@@ -221,7 +243,7 @@ def get_best_question(data, header, header_vals):
 
 def log(*args):
     """For Debugging"""
-    print(args)
+    # print(args)
     pass
 
 def main():
@@ -241,13 +263,20 @@ def main():
 
     partitions = partition_by_a(training_data, 4, header_info)
     print "pick pat:", info_gain_from_entropy(partitions, e)
+    # print [len(x) for x in partitions]
 
-    best_gain, best_attr_idx = get_best_attr(training_data, header_info) # run all attr and get max gain
-    print header_info[best_attr_idx]['name']
+    # partitions = partition_by_a(partitions[2], 3, header_info)
+    # print[len(x) for x in partitions]
+
+
+    best_gain, best_q = get_best_question(training_data, header_info) # run all attr and get max gain
+    print header_info[best_q]['name']
 
     print "---Start Run---"
     n = len(header_info) - 1
-    node = decision_tree_learning(training_data, list(range(n)), training_data, header_info)
+    node = decision_tree_learning(training_data, training_data, header_info, list(range(n)))
+    print_tree(node, header_info)
+    # print_tree_2(node, header_info)
 
 
 if __name__ == '__main__':
