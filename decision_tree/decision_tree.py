@@ -150,17 +150,21 @@ def print_tree(node, header_info, spacing=""):
         print spacing + '-->' + header_info[node.q]['values'][i] + ':'
         print_tree(child, header_info, spacing + "  ")
 
+def print_tree_2(node, header_info, fname):
 
-def print_tree_2(node, header_info, parent=None):
-    if isinstance(node, Leaf):
-        print "%s? %s %s" % (header_info[node.pr_q]['name'], node.pr_attr, node.pred) # print LEAF
-        return
+    def print_tree_helper(node, header_info, parent=None):
+        if isinstance(node, Leaf):
+            print >> fn, "%s? %s, %s" % (header_info[node.pr_q]['name'], node.pr_attr, node.pred) # print LEAF
+            return
 
-    if node.pr_q: # neglect first decision node
-        print "%s? %s %s?" % (header_info[node.pr_q]['name'], node.pr_attr, header_info[node.q]['name'])# print DECISION
+        if node.pr_q: # neglect first decision node
+            print >> fn, "%s? %s, %s?" % (header_info[node.pr_q]['name'], node.pr_attr, header_info[node.q]['name'])# print DECISION
 
-    for i, child in enumerate(node.child_nodes):
-        print_tree_2(child, header_info, node)
+        for i, child in enumerate(node.child_nodes):
+            print_tree_helper(child, header_info, node)
+
+    with open(fname, 'w') as fn:
+        print_tree_helper(node, header_info)
 
 # Parser
 def read_decision_tree(fname):
@@ -219,23 +223,24 @@ def log(*args):
 
 def main():
     dt_file = "examples.txt"
+    out_file = "dtree.txt"
+
     header_info, training_data = read_decision_tree(dt_file)
     log(header_info)
 
     # # cal uncertain
     g = gini(training_data)
     e = entropy(training_data)
-    print "entropy:", g, e
+    log("entropy:", g, e)
 
     best_gain, best_q = get_best_question(training_data, header_info) # run all attr and get max gain
     partitions = partition_by_a(training_data, best_q, header_info)
-    print header_info[best_q]['name']
+    log(header_info[best_q]['name'])
 
-    print "---Start Run---"
     n = len(header_info) - 1
     node = decision_tree_learning(training_data, training_data, header_info, list(range(n)))
     # print_tree(node, header_info)
-    print_tree_2(node, header_info)
+    print_tree_2(node, header_info, out_file)
 
 
 if __name__ == '__main__':
