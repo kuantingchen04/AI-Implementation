@@ -2,6 +2,8 @@
 
 import math
 
+TOLERANCE = 1e-8
+
 class Question:
     """col and value"""
     def __init__(self, col, value, header_info):
@@ -15,7 +17,6 @@ class Question:
 
     def __repr__(self):
         return "Is %s == %s?" % (self.header_info[self.col]['name'], str(self.value))
-
 
 def partition_by_a(data, col, header_info):
     """given colomn"""
@@ -43,21 +44,29 @@ def class_counts(rows):
 def entropy(data):
     counts = class_counts(data)
     # print data,counts
-    entropy = 0
+    entropy = 0.0
     for label in counts:
         prob_of_lbl = counts[label] / float(len(data))
         entropy -= prob_of_lbl * math.log(prob_of_lbl,2)
     return entropy
 
+def gini(data): # faster than entropy
+    counts = class_counts(data)
+    impurity = 1
+    for lbl in counts:
+        prob_of_lbl = counts[lbl] / float(len(data))
+        impurity -= prob_of_lbl**2
+    return impurity
+
 def info_gain_from_entropy(partitions, current_uncertainty):
     cnts = [ len(x) for x in partitions ]
     total = sum(cnts)
-    res = current_uncertainty
+    sum_e = 0.0
     for i, cnt in enumerate(cnts):
         p = float(cnt)/total
-        res = res - p * entropy(partitions[i])
-        # print cnt, p, entropy(partitions[i])
-    return res
+        sum_e += p * entropy(partitions[i])
+        # print p, entropy(partitions[i])
+    return current_uncertainty - sum_e
 
 # Find most important
 def get_best_question(data, header_info, idx_lst=None):
@@ -71,8 +80,8 @@ def get_best_question(data, header_info, idx_lst=None):
 
         partitions = partition_by_a(data, idx, header_info)
         gain = info_gain_from_entropy(partitions, current_uncertainty)
-        log(idx, gain, [len(x) for x in partitions], current_uncertainty)
-        if gain >= best_gain:
+        log(idx, gain, [len(x) for x in partitions], [class_counts(x) for x in partitions], current_uncertainty)
+        if gain >= best_gain and abs(gain-best_gain) > TOLERANCE:
             best_gain, best_attr = gain, idx
 
     log(header_info[best_attr]['name'], idx_lst, best_attr, best_gain, len(data))
@@ -95,7 +104,10 @@ class Leaf:
         self.pr_attr = pr_attr
         self.pred = pred
 
+# Main Program
 def decision_tree_learning(examples, parent_examples, header_info, q_idxs, pr_q=None, pr_attr=None):
+
+    # Invalid
     if len(examples) == 0:
         pr_cls_cnt = class_counts(parent_examples)
         pred = max(pr_cls_cnt, key=lambda k: pr_cls_cnt[k])
@@ -103,6 +115,7 @@ def decision_tree_learning(examples, parent_examples, header_info, q_idxs, pr_q=
 
     cls_cnt = class_counts(examples)
 
+    # Success
     if len(cls_cnt.keys())==1: # only 1 class
         pred = cls_cnt.keys()[0]
         return Leaf(examples, pr_q, pr_attr, pred)
@@ -111,8 +124,7 @@ def decision_tree_learning(examples, parent_examples, header_info, q_idxs, pr_q=
         pred = max(cls_cnt, key=lambda k: cls_cnt[k])
         return Leaf(examples, pr_q, pr_attr, pred)
 
-    # pick best attr
-
+    # pick best q
     best_gain, best_q = get_best_question(examples, header_info, q_idxs)
     partitions = partition_by_a(examples, best_q, header_info)
 
@@ -125,7 +137,6 @@ def decision_tree_learning(examples, parent_examples, header_info, q_idxs, pr_q=
         node.child_nodes.append(child)
 
     return node
-
 
 
 def print_tree(node, header_info, spacing=""):
@@ -142,7 +153,7 @@ def print_tree(node, header_info, spacing=""):
 
 def print_tree_2(node, header_info, parent=None):
     if isinstance(node, Leaf):
-        print header_info[node.pr_q]['name'], node.pr_attr, node.pred # print LEAF
+        print "%s? %s %s" % (header_info[node.pr_q]['name'], node.pr_attr, node.pred) # print LEAF
         return
 
     if node.pr_q: # neglect first decision node
@@ -151,7 +162,7 @@ def print_tree_2(node, header_info, parent=None):
     for i, child in enumerate(node.child_nodes):
         print_tree_2(child, header_info, node)
 
-# Parsers
+# Parser
 def read_decision_tree(fname):
     """"""
 
@@ -201,46 +212,6 @@ def partition_by_q(data, question):
             false_rows.append(row)
     return true_rows, false_rows
 
-
-def gini(data):
-    counts = class_counts(data)
-    impurity = 1
-    for lbl in counts:
-        prob_of_lbl = counts[lbl] / float(len(data))
-        impurity -= prob_of_lbl**2
-    return impurity
-
-
-def info_gain_from_gini(left, right, current_uncertainty):
-    p = float(len(left)) / (len(left) + len(right))
-    return current_uncertainty - p * gini(left) - (1 - p) * gini(right)
-
-def get_best_q(data, header, header_vals):
-    """Try all question and find the best"""
-    best_gain = 0
-    best_question = None
-    current_uncertainty = gini(data)
-    n_features = len(header_vals) - 1
-
-    for i in range(n_features): # each feature
-
-        for val in header_vals[i]: # possible val for each feature
-
-            q = Question(i, val, header)
-            true_rows, false_rows = partition_by_q(data, q)
-
-            if len(true_rows) == 0 or len(false_rows) == 0:
-                continue
-
-            gain = info_gain_from_gini(true_rows, false_rows, current_uncertainty)
-
-            if gain >= best_gain: # update
-                best_gain, best_question = gain, q
-
-    return best_gain, best_question
-
-
-
 def log(*args):
     """For Debugging"""
     # print(args)
@@ -251,32 +222,20 @@ def main():
     header_info, training_data = read_decision_tree(dt_file)
     log(header_info)
 
-    # question
-    q = Question(0, "Yes", header_info)
-    print q
-    print q.match(training_data[0])
-
     # # cal uncertain
     g = gini(training_data)
     e = entropy(training_data)
-    print "origin:", g, e
-
-    partitions = partition_by_a(training_data, 4, header_info)
-    print "pick pat:", info_gain_from_entropy(partitions, e)
-    # print [len(x) for x in partitions]
-
-    # partitions = partition_by_a(partitions[2], 3, header_info)
-    # print[len(x) for x in partitions]
-
+    print "entropy:", g, e
 
     best_gain, best_q = get_best_question(training_data, header_info) # run all attr and get max gain
+    partitions = partition_by_a(training_data, best_q, header_info)
     print header_info[best_q]['name']
 
     print "---Start Run---"
     n = len(header_info) - 1
     node = decision_tree_learning(training_data, training_data, header_info, list(range(n)))
-    print_tree(node, header_info)
-    # print_tree_2(node, header_info)
+    # print_tree(node, header_info)
+    print_tree_2(node, header_info)
 
 
 if __name__ == '__main__':
