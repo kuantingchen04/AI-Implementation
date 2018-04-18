@@ -1,0 +1,24 @@
+% Input Attributes (Format: Attribute name: value1, value2, ...)
+Time: Morning, Afternoon, Night
+Type: Professional, Grand Slam, Friendly
+Court: Grass, Concrete, Asphalt, Clay, Hard
+% Decision values (comma-separated list)
+A, B
+% Example instances
+% Attribute ordering will be the same as above; decision is last
+Morning, Professional, Grass, A
+Afternoon, Professional, Grass, A
+Night, Professional, Concrete, B
+Afternoon, Grand Slam, Asphalt, A
+Afternoon, Grand Slam, Clay, A
+Morning, Professional, Grass, A
+Afternoon, Grand Slam, Clay, A
+Afternoon, Friendly, Concrete, B
+Night, Friendly, Asphalt, A
+Afternoon, Professional, Clay, B
+Afternoon, Grand Slam, Grass, A
+Afternoon, Grand Slam, Asphalt, A
+Afternoon, Grand Slam, Clay, B
+Night, Friendly, Hard, A
+Afternoon, Grand Slam, Asphalt, A
+Afternoon, Professional, Clay, B

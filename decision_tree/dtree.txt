@@ -1,3 +1,5 @@
+% Format: decision? value, next node (leaf value or next decision?)
+% Use question mark and comma markers as indicated below.
 Pat? None, No
 Pat? Some, Yes
 Pat? Full, Hun?
